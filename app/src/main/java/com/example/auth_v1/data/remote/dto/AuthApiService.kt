@@ -11,8 +11,8 @@ interface AuthApiService {
     @POST("auth/login")
     suspend fun login(@Body loginRequest: LoginRequestDto): Response<SimpleAuthResponseDto>
 
-    @POST("auth/register")
-    suspend fun register(@Body registerRequest: RegisterRequestDto): Response<AuthResponseDto>
+    @POST("users")
+    suspend fun register(@Body registerRequest: RegisterRequestDto): Response<RegisterResponseDto>
 
     @POST("auth/refresh")
     suspend fun refreshToken(@Body refreshRequest: RefreshTokenRequestDto): Response<AuthResponseDto>

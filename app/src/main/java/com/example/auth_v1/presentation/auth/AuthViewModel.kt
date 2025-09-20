@@ -1,5 +1,6 @@
 package com.example.auth_v1.presentation.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.auth_v1.domain.model.User
@@ -151,15 +152,21 @@ class AuthViewModel @Inject constructor(
 
     fun register() {
         val currentState = _registerFormState.value
+        Log.d("AuthViewModel", "Register function called")
+        Log.d("AuthViewModel", "Form state: $currentState")
+        Log.d("AuthViewModel", "Form isValid: ${currentState.isValid}")
 
         if (!currentState.isValid) {
+            Log.e("AuthViewModel", "Form is not valid, aborting register")
             return
         }
 
+        Log.d("AuthViewModel", "Starting register process...")
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             _registerFormState.value = currentState.copy(isLoading = true)
 
+            Log.d("AuthViewModel", "Calling registerUseCase with email: ${currentState.email}, name: ${currentState.fullName}")
             when (val result = registerUseCase(
                 email = currentState.email,
                 password = currentState.password,
@@ -167,16 +174,19 @@ class AuthViewModel @Inject constructor(
                 name = currentState.fullName
             )) {
                 is Result.Success -> {
+                    Log.d("AuthViewModel", "Register successful: ${result.data}")
                     _authState.value = AuthState.Success(result.data.user)
                     _registerFormState.value = currentState.copy(isLoading = false)
                 }
 
                 is Result.Error -> {
+                    Log.e("AuthViewModel", "Register error: ${result.message}")
                     _authState.value = AuthState.Error(result.message ?: "Registration failed")
                     _registerFormState.value = currentState.copy(isLoading = false)
                 }
 
                 is Result.Loading -> {
+                    Log.d("AuthViewModel", "Register loading...")
                     // Already handled above
                 }
             }

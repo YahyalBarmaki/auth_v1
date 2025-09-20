@@ -39,8 +39,8 @@ fun CustomTextField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = if (isError) LetsConnectColors.Error else LetsConnectColors.Primary2,
             unfocusedBorderColor = if (isError) LetsConnectColors.Error else LetsConnectColors.Outline,
-            focusedTextColor = LetsConnectColors.OnSurface,
-            unfocusedTextColor = LetsConnectColors.OnSurface,
+            focusedTextColor = androidx.compose.ui.graphics.Color.White,
+            unfocusedTextColor = androidx.compose.ui.graphics.Color.White,
             cursorColor = LetsConnectColors.Primary2
         ),
         shape = RoundedCornerShape(12.dp),

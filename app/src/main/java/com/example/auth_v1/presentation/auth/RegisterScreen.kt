@@ -19,10 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -32,6 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.MaterialTheme
 import com.example.auth_v1.Constants.LetsConnectColors
 import com.example.auth_v1.presentation.auth.common.CustomTextField
 import com.example.auth_v1.presentation.auth.common.LogoSection
@@ -49,21 +49,11 @@ fun RegisterScreen(
     onAppleSignUp: () -> Unit = {},
     onLoginPressed: () -> Unit = {},
     onSupportPressed: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
-    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
-
-    // Validation states
-    val isFormValid = fullName.isNotBlank() &&
-            email.isNotBlank() &&
-            password.isNotBlank() &&
-            confirmPassword.isNotBlank() &&
-            password == confirmPassword
+    val authState by viewModel.authState.collectAsState()
+    val registerFormState by viewModel.registerFormState.collectAsState()
 
     Box(
         modifier = modifier
@@ -128,68 +118,73 @@ fun RegisterScreen(
 
             // Full Name input
             CustomTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
+                value = registerFormState.fullName,
+                onValueChange = viewModel::updateRegisterFullName,
                 label = "Enter Full Name",
                 modifier = Modifier.fillMaxWidth(),
-                keyboardType = KeyboardType.Text
+                keyboardType = KeyboardType.Text,
+                isError = registerFormState.fullNameError != null,
+                errorMessage = registerFormState.fullNameError
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Email input
             CustomTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = registerFormState.email,
+                onValueChange = viewModel::updateRegisterEmail,
                 label = "Enter Email Address",
                 modifier = Modifier.fillMaxWidth(),
-                keyboardType = KeyboardType.Email
+                keyboardType = KeyboardType.Email,
+                isError = registerFormState.emailError != null,
+                errorMessage = registerFormState.emailError
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password input
             PasswordTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = registerFormState.password,
+                onValueChange = viewModel::updateRegisterPassword,
                 label = "Enter Password",
                 modifier = Modifier.fillMaxWidth(),
-                isVisible = isPasswordVisible,
-                onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
+                isError = registerFormState.passwordError != null,
+                errorMessage = registerFormState.passwordError
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Confirm Password input
             PasswordTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = registerFormState.confirmPassword,
+                onValueChange = viewModel::updateRegisterConfirmPassword,
                 label = "Confirm Password",
                 modifier = Modifier.fillMaxWidth(),
-                isVisible = isConfirmPasswordVisible,
-                onVisibilityToggle = { isConfirmPasswordVisible = !isConfirmPasswordVisible }
+                isError = registerFormState.confirmPasswordError != null,
+                errorMessage = registerFormState.confirmPasswordError
             )
 
-            // Password match indicator
-            if (confirmPassword.isNotBlank() && password != confirmPassword) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Passwords do not match",
-                    color = Color.Red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Register button
             SignInButton(
-                onClick = { onRegisterPressed(fullName, email, password, confirmPassword) },
+                onClick = { viewModel.register() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = isFormValid,
+                enabled = registerFormState.isValid && !registerFormState.isLoading,
+                isLoading = registerFormState.isLoading,
                 text = "Create Account"
             )
+
+            // Error message from AuthState
+            if (authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -252,5 +247,12 @@ fun RegisterScreen(
 @Composable
 @Preview(showBackground = true)
 fun RegisterScreenPreview() {
-    RegisterScreen()
+    RegisterScreen(
+        onBackPressed = {},
+        onRegisterPressed = { _, _, _, _ -> },
+        onGoogleSignUp = {},
+        onAppleSignUp = {},
+        onLoginPressed = {},
+        onSupportPressed = {}
+    )
 }

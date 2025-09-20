@@ -58,21 +58,60 @@ class AuthRepositoryImpl @Inject constructor(
         name: String
     ): Result<AuthResponse> {
         return try {
+            Log.d("AuthRepository", "Starting register for email: $email, name: $name")
             val request = RegisterRequestDto(email, password, name)
+            Log.d("AuthRepository", "Request payload: email=$email, name=$name, password length=${password.length}")
+            Log.d("AuthRepository", "Making API call to register endpoint")
             val response = apiService.register(request)
 
             if (response.isSuccessful) {
-                response.body()?.let { authResponseDto ->
-                    val authResponse = authResponseDto.toDomain()
-                    saveAuthData(authResponse)
+                Log.d("AuthRepository", "Register successful: ${response.code()}")
+                response.body()?.let { registerResponseDto ->
+                    Log.d("AuthRepository", "Register response received: $registerResponseDto")
+                    
+                    // Créer un utilisateur à partir de la réponse
+                    val user = com.example.auth_v1.domain.model.User(
+                        id = registerResponseDto.id.toString(),
+                        email = registerResponseDto.email,
+                        name = registerResponseDto.name,
+                        profilePictureUrl = null,
+                        isEmailVerified = false,
+                        createdAt = null
+                    )
+                    
+                    // Créer une réponse d'authentification fictive 
+                    // (puisque le backend ne fournit pas de tokens lors de l'inscription)
+                    val authResponse = com.example.auth_v1.domain.model.AuthResponse(
+                        user = user,
+                        accessToken = "", // Pas de token fourni par le backend
+                        refreshToken = "", // Pas de token fourni par le backend  
+                        expiresIn = 0L // Pas d'expiration fournie
+                    )
+                    
+                    // Sauvegarder seulement les informations utilisateur (pas les tokens vides)
+                    userPreferences.saveUser(user)
+                    
                     Result.Success(authResponse)
-                } ?: Result.Error(Exception("Empty response body"))
+                } ?: {
+                    Log.e("AuthRepository", "Empty response body from register")
+                    Result.Error(Exception("Empty response body"))
+                }()
             } else {
+                Log.e("AuthRepository", "Register failed: ${response.code()} - ${response.message()}")
+                // Log le body d'erreur pour voir ce que dit le backend
+                try {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("AuthRepository", "Error response body: $errorBody")
+                } catch (e: Exception) {
+                    Log.e("AuthRepository", "Couldn't read error body: ${e.message}")
+                }
                 Result.Error(HttpException(response))
             }
         } catch (e: IOException) {
+            Log.e("AuthRepository", "Network error in register: ${e.message}")
             Result.Error(e)
         } catch (e: Exception) {
+            Log.e("AuthRepository", "Error in register: ${e.message}")
             Result.Error(e)
         }
     }

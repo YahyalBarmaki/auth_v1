@@ -1,63 +1,45 @@
 package com.example.auth_v1.presentation.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.auth_v1.Constants.LetsConnectColors
-import com.example.auth_v1.presentation.auth.common.CustomTextField
-import com.example.auth_v1.presentation.auth.common.LogoSection
-import com.example.auth_v1.presentation.auth.common.PasswordTextField
-import com.example.auth_v1.presentation.auth.common.RegisterLink
-import com.example.auth_v1.presentation.auth.common.SignInButton
-import com.example.auth_v1.presentation.auth.common.SocialSignInButtons
-import com.example.auth_v1.presentation.auth.common.SupportLink
+import com.example.auth_v1.presentation.auth.common.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
+    modifier: Modifier = Modifier,
     onBackPressed: () -> Unit = {},
-    onSignInPressed: (String, String) -> Unit = { _, _ -> },
-    onGoogleSignIn: () -> Unit = {},
-    onAppleSignIn: () -> Unit = {},
-    onRegisterPressed: () -> Unit = {},
+    onNavigateToRegister: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
     onSupportPressed: () -> Unit = {},
     onForgotPasswordPressed: () -> Unit = {},
-    modifier: Modifier = Modifier
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
+    val authState by viewModel.authState.collectAsState()
+    val loginFormState by viewModel.loginFormState.collectAsState()
 
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                onNavigateToHome()
+            }
+            else -> { /* Handle other states */ }
+        }
+    }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
@@ -80,105 +62,94 @@ fun LoginScreen(
                 tint = LetsConnectColors.OnSurface
             )
         }
-        
+
         Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                LogoSection()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            LogoSection()
 
-                Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-                // Support link
-               // SupportLink(onClick = onSupportPressed)
+           // SupportLink(onClick = onSupportPressed)
 
-                Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-                // Username/Email input
+            // Email field
             CustomTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Enter Username Or Email",
-                modifier = Modifier.fillMaxWidth(),
-                keyboardType = KeyboardType.Email
+                value = loginFormState.email,
+                onValueChange = viewModel::updateLoginEmail,
+                label = "Email",
+                isError = loginFormState.emailError != null,
+                errorMessage = loginFormState.emailError,
+                modifier = Modifier.fillMaxWidth()
             )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Password field
             PasswordTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = loginFormState.password,
+                onValueChange = viewModel::updateLoginPassword,
                 label = "Password",
-                modifier = Modifier.fillMaxWidth(),
-                isVisible = isPasswordVisible,
-                onVisibilityToggle = { isPasswordVisible = !isPasswordVisible }
+                isError = loginFormState.passwordError != null,
+                errorMessage = loginFormState.passwordError,
+                modifier = Modifier.fillMaxWidth()
             )
 
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Recovery Password",
-                    color = LetsConnectColors.OnSurfaceVariant,
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .clickable { onForgotPasswordPressed() }
-                )
+            Spacer(modifier = Modifier.height(32.dp))
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Sign In button
+            // Sign In button
             SignInButton(
-                onClick = { onSignInPressed(username, password) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = username.isNotBlank() && password.isNotBlank(),
-                text = "Sign In"
-            )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Divider
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .height(1.dp)
-                            .weight(1f)
-                            .background(LetsConnectColors.Outline)
-                    )
-                    Text(
-                        text = "Or",
-                        color = LetsConnectColors.OnSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        fontSize = 14.sp
-                    )
-                    Box(
-                        modifier = Modifier
-                            .height(1.dp)
-                            .weight(1f)
-                            .background(LetsConnectColors.Outline)
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Social sign-in buttons
-            SocialSignInButtons(
-                onGoogleClick = onGoogleSignIn,
-                onAppleClick = onAppleSignIn
+                onClick = { viewModel.login() },
+                isLoading = loginFormState.isLoading,
+                enabled = loginFormState.isValid && !loginFormState.isLoading,
+                modifier = Modifier.fillMaxWidth()
             )
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Register link
-            RegisterLink(onClick = onRegisterPressed)
+            // Error message
+            if (authState is AuthState.Error) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = (authState as AuthState.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Forgot Password link
+            ForgotPasswordLink(onClick = onForgotPasswordPressed)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Social sign-in buttons
+            SocialSignInButtons(
+                onGoogleClick = viewModel::signInWithGoogle,
+                onAppleClick = viewModel::signInWithApple
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Register link
+            RegisterLink(onClick = onNavigateToRegister)
+        }
     }
 }
 
 @Composable
 @Preview(showBackground = true)
 fun LoginScreenPreview() {
-    LoginScreen(modifier = Modifier)
+    LoginScreen(
+        modifier = Modifier,
+        onBackPressed = {},
+        onNavigateToRegister = {},
+        onNavigateToHome = {},
+        onSupportPressed = {},
+        onForgotPasswordPressed = {}
+    )
 }

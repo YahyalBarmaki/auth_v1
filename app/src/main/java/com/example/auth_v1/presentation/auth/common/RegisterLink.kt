@@ -18,7 +18,12 @@ import com.example.auth_v1.Constants.LetsConnectColors.Primary2
 public fun RegisterLink(onClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { 
+                println("RegisterLink clicked!")
+                onClick() 
+            }
     ) {
         Text(
             text = "Not A Member ? ",
@@ -29,8 +34,7 @@ public fun RegisterLink(onClick: () -> Unit) {
             text = "Register Now",
             color = Color(LetsConnectColors.Primary2.value),
             fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable { onClick() }
+            fontWeight = FontWeight.Medium
         )
     }
 }

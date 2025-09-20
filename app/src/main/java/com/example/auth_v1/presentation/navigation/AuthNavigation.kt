@@ -43,20 +43,11 @@ fun NavGraphBuilder.authNavigation(
                     // Handle back press - maybe exit app or go to welcome screen
                     navController.popBackStack()
                 },
-                onSignInPressed = { email, password ->
-                    authViewModel.updateLoginEmail(email)
-                    authViewModel.updateLoginPassword(password)
-                    authViewModel.login()
-                },
-                onGoogleSignIn = {
-                    authViewModel.signInWithGoogle()
-                },
-                onAppleSignIn = {
-                    authViewModel.signInWithApple()
-                },
-                onRegisterPressed = {
+                onNavigateToRegister = {
+                    println("Navigating to register screen...")
                     navController.navigate(NavigationDestinations.REGISTER)
                 },
+                onNavigateToHome = onNavigateToMain,
                 onSupportPressed = {
                     // Navigate to support or open external link
                     // Could be external link or in-app support
